@@ -34,7 +34,7 @@ import java.util.Map;
 
 import static java.lang.Math.max;
 
-public class OracleSchemaResolver extends JDBCSchemaResolver {
+public class DamengSchemaResolver extends JDBCSchemaResolver {
 
     @Override
     public ResultSet getTables(Connection connection, String dbName) throws SQLException {
@@ -84,6 +84,9 @@ public class OracleSchemaResolver extends JDBCSchemaResolver {
         switch (dataType) {
             case Types.SMALLINT:
                 primitiveType = PrimitiveType.SMALLINT;
+                break;
+            case Types.INTEGER:
+                primitiveType = PrimitiveType.INT;
                 break;
             case Types.FLOAT:
             // BINARY_FLOAT
