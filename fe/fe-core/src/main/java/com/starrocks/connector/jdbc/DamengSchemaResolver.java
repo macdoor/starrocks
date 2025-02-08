@@ -81,64 +81,65 @@ public class DamengSchemaResolver extends JDBCSchemaResolver {
     @Override
     public Type convertColumnType(int dataType, String typeName, int columnSize, int digits) {
         PrimitiveType primitiveType;
+        boolean isUnsigned = typeName.toLowerCase().contains("unsigned");
+
         switch (dataType) {
+            case Types.BOOLEAN:
+            case Types.BIT:
+                primitiveType = PrimitiveType.BOOLEAN;
+                break;
+            case Types.TINYINT:
+                if (isUnsigned) {
+                    primitiveType = PrimitiveType.SMALLINT;
+                } else {
+                    primitiveType = PrimitiveType.TINYINT;
+                }
+                break;
             case Types.SMALLINT:
-                primitiveType = PrimitiveType.SMALLINT;
+                if (isUnsigned) {
+                    primitiveType = PrimitiveType.INT;
+                } else {
+                    primitiveType = PrimitiveType.SMALLINT;
+                }
                 break;
             case Types.INTEGER:
-                primitiveType = PrimitiveType.INT;
+                if (isUnsigned) {
+                    primitiveType = PrimitiveType.BIGINT;
+                } else {
+                    primitiveType = PrimitiveType.INT;
+                }
+                break;
+            case Types.BIGINT:
+                if (isUnsigned) {
+                    primitiveType = PrimitiveType.LARGEINT;
+                } else {
+                    primitiveType = PrimitiveType.BIGINT;
+                }
                 break;
             case Types.FLOAT:
-            // BINARY_FLOAT
-            case 100:
+            case Types.REAL: // real => short float
                 primitiveType = PrimitiveType.FLOAT;
                 break;
             case Types.DOUBLE:
-            // BINARY_DOUBLE
-            case 101:
                 primitiveType = PrimitiveType.DOUBLE;
                 break;
-            case Types.NUMERIC:
-            // NUMBER
-            case 3:
+            case Types.DECIMAL:
                 primitiveType = PrimitiveType.DECIMAL32;
                 break;
             case Types.CHAR:
-            case Types.NCHAR:
                 return ScalarType.createCharType(columnSize);
             case Types.VARCHAR:
-            // NVARCHAR2
-            case Types.NVARCHAR:
-                if (columnSize > 0) {
-                    return ScalarType.createVarcharType(columnSize);
-                } else {
-                    return ScalarType.createVarcharType(ScalarType.CATALOG_MAX_VARCHAR_LENGTH);
-                }
-            case Types.CLOB:
-            case Types.NCLOB:
-            // LONG
-            case Types.LONGVARCHAR:
-                return ScalarType.createVarcharType(ScalarType.CATALOG_MAX_VARCHAR_LENGTH);
-            case Types.BLOB:
-            case Types.BINARY:
-            case Types.VARBINARY:
-            // raw
-            case 23:
-                if (columnSize > 0) {
-                    return ScalarType.createVarbinary(columnSize);
-                } else {
-                    return ScalarType.createVarbinary(ScalarType.CATALOG_MAX_VARCHAR_LENGTH);
-                }
+            case Types.LONGVARCHAR: //text type in mysql
+                return ScalarType.createVarcharType(columnSize);
             case Types.DATE:
                 primitiveType = PrimitiveType.DATE;
                 break;
-            // Don't support timestamp type, just convert it to string
+            case Types.TIME:
+                primitiveType = PrimitiveType.TIME;
+                break;
             case Types.TIMESTAMP:
-            // TIMESTAMP WITH LOCAL TIME ZONE
-            case -102:
-            // TIMESTAMP WITH TIME ZONE
-            case -101:
-                return ScalarType.createVarcharType(ScalarType.CATALOG_MAX_VARCHAR_LENGTH);
+                primitiveType = PrimitiveType.DATETIME;
+                break;
             default:
                 primitiveType = PrimitiveType.UNKNOWN_TYPE;
                 break;
@@ -148,11 +149,6 @@ public class DamengSchemaResolver extends JDBCSchemaResolver {
             return ScalarType.createType(primitiveType);
         } else {
             int precision = columnSize + max(-digits, 0);
-            // if user not specify numeric precision and scale, the default value is 0,
-            // we can't defer the precision and scale, can only deal it as string.
-            if (precision == 0) {
-                return ScalarType.createVarcharType(ScalarType.CATALOG_MAX_VARCHAR_LENGTH);
-            }
             return ScalarType.createUnifiedDecimalType(precision, max(digits, 0));
         }
     }
