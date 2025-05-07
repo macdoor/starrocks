@@ -90,6 +90,9 @@ public class PostgresSchemaResolver extends JDBCSchemaResolver {
             case Types.BIT:
                 primitiveType = PrimitiveType.BOOLEAN;
                 break;
+            // Panwei 数据类型 TINYINT，type=1111
+            case 1111:
+                return ScalarType.createVarcharType(ScalarType.getOlapMaxVarcharLength());
             case Types.SMALLINT:
                 primitiveType = PrimitiveType.SMALLINT;
                 break;
