@@ -29,6 +29,8 @@ import com.starrocks.statistic.ExternalBasicStatsMeta;
 import com.starrocks.statistic.StatsConstants;
 import io.trino.hive.$internal.org.apache.commons.lang3.tuple.ImmutableTriple;
 import io.trino.hive.$internal.org.apache.commons.lang3.tuple.Triple;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 
 import java.util.List;
 import java.util.Map;
@@ -36,10 +38,14 @@ import java.util.Set;
 import java.util.stream.Collectors;
 
 public class StatisticsUtils {
+    private static final Logger LOG = LogManager.getLogger(StatisticsUtils.class);
+
     public static Table getTableByUUID(ConnectContext context, String tableUUID) {
         String[] splits = tableUUID.split("\\.");
 
-        Preconditions.checkState(splits.length == 4);
+        LOG.warn(String.format("tableUUID %s", tableUUID));
+
+        Preconditions.checkState(splits.length >= 4, "Invalid tableUUID format: %s", tableUUID);
         Table table = GlobalStateMgr.getCurrentState().getMetadataMgr().getTable(context, splits[0], splits[1], splits[2]);
         if (table == null) {
             throw new SemanticException("Table [%s.%s.%s] is not existed", splits[0], splits[1], splits[2]);
@@ -54,7 +60,7 @@ public class StatisticsUtils {
     public static Triple<String, Database, Table> getTableTripleByUUID(ConnectContext context, String tableUUID) {
         String[] splits = tableUUID.split("\\.");
 
-        Preconditions.checkState(splits.length == 4);
+        Preconditions.checkState(splits.length >= 4, "Invalid tableUUID format: %s", tableUUID);
         Database db = GlobalStateMgr.getCurrentState().getMetadataMgr().getDb(context, splits[0], splits[1]);
         if (db == null) {
             throw new SemanticException("Database [%s.%s] is not existed", splits[0], splits[1]);
