@@ -56,6 +56,7 @@ import mockit.Mock;
 import mockit.MockUp;
 import mockit.Mocked;
 import org.apache.paimon.CoreOptions;
+import org.apache.paimon.Snapshot;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.CatalogContext;
 import org.apache.paimon.catalog.CatalogFactory;
@@ -241,7 +242,8 @@ public class PaimonMetadataTest {
             {
                 paimonNativeCatalog.getTable((Identifier) any);
                 result = paimonSystemTable;
-                paimonSystemTable.latestSnapshotId();
+                Optional<Snapshot> latestSnapshotOptional = paimonSystemTable.latestSnapshot();
+                latestSnapshotOptional.get().id();
                 result = new Exception("Readonly Table tbl1$manifests does not support currentSnapshot.");
                 paimonSystemTable.newReadBuilder();
                 result = readBuilder;
@@ -267,9 +269,9 @@ public class PaimonMetadataTest {
                 ));
         Identifier tblIdentifier = new Identifier("db1", "tbl1");
         org.apache.paimon.partition.Partition partition1 = new Partition(Map.of("year", "2020", "month", "1"),
-                100L, 1L, 1L, 1741327322000L);
+                100L, 1L, 1L, 1741327322000L, false);
         org.apache.paimon.partition.Partition partition2 = new Partition(Map.of("year", "2020", "month", "2"),
-                100L, 1L, 1L, 1741327322000L);
+                100L, 1L, 1L, 1741327322000L, false);
 
         new Expectations() {
             {
