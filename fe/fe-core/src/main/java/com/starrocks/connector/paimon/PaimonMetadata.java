@@ -49,6 +49,7 @@ import com.starrocks.sql.optimizer.statistics.ColumnStatistic;
 import com.starrocks.sql.optimizer.statistics.Statistics;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.apache.paimon.Snapshot;
 import org.apache.paimon.catalog.CachingCatalog;
 import org.apache.paimon.catalog.Catalog;
 import org.apache.paimon.catalog.Identifier;
@@ -276,10 +277,11 @@ public class PaimonMetadata implements ConnectorMetadata {
     public List<RemoteFileInfo> getRemoteFiles(Table table, GetRemoteFilesParams params) {
         RemoteFileInfo remoteFileInfo = new RemoteFileInfo();
         PaimonTable paimonTable = (PaimonTable) table;
+        Optional<Snapshot> latestSnapshotOptional = paimonTable.getNativeTable().latestSnapshot();
         long latestSnapshotId = -1L;
         try {
-            if (paimonTable.getNativeTable().latestSnapshotId().isPresent()) {
-                latestSnapshotId = paimonTable.getNativeTable().latestSnapshotId().getAsLong();
+            if (latestSnapshotOptional.isPresent()) {
+                latestSnapshotId = latestSnapshotOptional.get().id();
             }
         } catch (Exception e) {
             // System table does not have snapshotId, ignore it.
@@ -300,7 +302,7 @@ public class PaimonMetadata implements ConnectorMetadata {
             }
             InnerTableScan scan = (InnerTableScan) readBuilder.newScan();
             PaimonMetricRegistry paimonMetricRegistry = new PaimonMetricRegistry();
-            List<Split> splits = scan.withMetricsRegistry(paimonMetricRegistry).plan().splits();
+            List<Split> splits = scan.withMetricRegistry(paimonMetricRegistry).plan().splits();
             traceScanMetrics(paimonMetricRegistry, splits, table.getCatalogTableName(), predicates);
 
             PaimonSplitsInfo paimonSplitsInfo = new PaimonSplitsInfo(predicates, splits);
